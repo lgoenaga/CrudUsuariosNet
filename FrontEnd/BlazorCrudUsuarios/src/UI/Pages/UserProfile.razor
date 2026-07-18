@@ -1,0 +1,50 @@
+@page "/UserProfile"
+@page "/users/me"
+
+@using BlazorCrudUsuarios.Application.Services
+@using Microsoft.AspNetCore.Authorization
+
+
+@attribute [Authorize]
+
+@inject TokenService TokenService
+
+<MudPaper Class="pa-6 mx-auto mt-6" Style="max-width:500px;">
+
+    <MudText Typo="Typo.h5" Class="mb-4">
+        Mi Perfil
+    </MudText>
+
+    @if (_email == null)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <MudText><b>Email:</b> @_email</MudText>
+        <MudText><b>Rol:</b> @_role</MudText>
+    }
+
+</MudPaper>
+
+
+@code {
+    string? _email;
+    string? _role;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await TokenService.GetToken();
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(token);
+
+            _email = jwt.Claims.FirstOrDefault(c => c.Type.Contains("email"))?.Value;
+
+            _role = jwt.Claims.FirstOrDefault(c => c.Type.Contains("role"))?.Value;
+        }
+    }
+}
+

@@ -1,0 +1,80 @@
+@page "/"
+@page "/Login"
+@using BlazorCrudUsuarios.Application.Models
+@using BlazorCrudUsuarios.Application.Services
+
+@inject Application.Interfaces.IAuthService AuthService
+@inject IJSRuntime Js
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject TokenService TokenService
+
+
+<MudPaper Class="pa-6 mx-auto mt-10" Style="max-width:400px">
+
+<MudText Typo="Typo.h5" Class="mb-4">Login</MudText>
+
+<MudTextField @bind-Value="_email" Label="Email" FullWidth="true" />
+<MudTextField @bind-Value="_password" Label="Password" InputType="InputType.Password" FullWidth="true" />
+
+<MudButton Class="mt-4" OnClick="@HandleLogin" 
+           Variant="Variant.Filled"
+           Color="Color.Primary"
+           FullWidth="true"
+>
+    Login
+</MudButton>
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <MudText Color="Color.Error">@_error</MudText>
+}
+@if (!string.IsNullOrEmpty(_success))
+{
+    <MudText Color="Color.Success">@_success</MudText>
+}
+</MudPaper>
+
+@code {
+    
+    string _email = "";
+    string _password = "";
+    string _error = "";
+    string _success = "";
+
+    
+    private async Task HandleLogin()
+    {
+        try
+        {
+            // limpiar antes
+            _error = "";
+            _success = "";
+
+            var token = await AuthService.Login(new LoginRequest
+            {
+                Email = _email,
+                Password = _password
+            });
+
+            Console.WriteLine(token); // luego lo guardamos
+            
+            await Js.InvokeVoidAsync("localStorageHelper.set", "token", token);
+            
+            var customAuth = (CustomAuthenticationStateProvider)AuthStateProvider;
+            customAuth.NotifyUserAuthentication(token);
+            
+            var role = await TokenService.GetRole();
+
+            Navigation.NavigateTo(role == "Admin" ? "/users" : "/users/me");
+            
+        }
+        catch (Exception ex)
+        {
+            _error = "";
+            _error = ex.Message;
+        }
+    }
+
+    
+}

@@ -1,0 +1,76 @@
+@page "/users/edit/{Id:int}"
+
+@attribute [Authorize]
+
+@using BlazorCrudUsuarios.Application.Interfaces
+@using Microsoft.AspNetCore.Authorization
+
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<MudPaper Class="pa-6 mx-auto mt-6" Style="max-width:500px;">
+
+    <MudText Typo="Typo.h5" Class="mb-4">
+        Editar Usuario
+    </MudText>
+
+    <MudTextField @bind-Value="_email" Label="Email" FullWidth="true" />
+    <MudTextField @bind-Value="_password"
+                  Label="Password"
+                  InputType="InputType.Password"
+                  FullWidth="true" />
+
+    <MudButton Class="mt-4"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               FullWidth="true"
+               OnClick="@HandleUpdate">
+        Guardar Cambios
+    </MudButton>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <MudText Color="Color.Error">@_error</MudText>
+    }
+
+</MudPaper>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    string _email = "";
+    string _password = "";
+    string _error = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 🔥 Por ahora simple (luego hacemos endpoint /users/{Id})
+        var users = await UserService.GetUsers();
+        var user = users.FirstOrDefault(u => u.Id == Id);
+
+        if (user != null)
+        {
+            _email = user.Email;
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        try
+        {
+            _error = "";
+
+            await UserService.UpdateUser(Id, new Application.Models.CreateUserRequest
+            {
+                Email = _email,
+                Password = _password
+            });
+
+            Navigation.NavigateTo("/users");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+}

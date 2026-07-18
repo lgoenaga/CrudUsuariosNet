@@ -1,0 +1,144 @@
+@page "/Users"
+
+@attribute [Authorize(Roles = "Admin")]
+
+@using BlazorCrudUsuarios.Application.Interfaces
+@using BlazorCrudUsuarios.Application.Models
+@using BlazorCrudUsuarios.src.UI.Components
+@using Microsoft.AspNetCore.Authorization
+
+@inject IUserService UserService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudPaper Class="pa-4">
+    
+    
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               Class="mb-4"
+               OnClick="@(() => Navigation.NavigateTo("/users/create"))">
+        Nuevo Usuario
+    </MudButton>
+
+
+    <MudText Typo="Typo.h5" Class="mb-4">Usuarios</MudText>
+
+    @if (_users == null)
+    {
+        <MudProgressCircular Indeterminate="true"/>
+    }
+    else if (!_users.Any())
+    {
+        <MudText>No hay usuarios</MudText>
+    }
+    else
+    {
+        <MudTable Items="_users" Hover="true" Bordered="true" Striped="true">
+
+            <HeaderContent>
+                <MudTh Style="text-align: center;">Email</MudTh>
+                <MudTh Style="width: 250px; text-align: center;">Acciones</MudTh>
+                <MudTh Style="width: 100px; text-align: center;">Rol</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd>@context.Email</MudTd>
+
+                <MudTd>
+                    <div class="d-flex justify-center gap-2">
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Info"
+                                   Style="width: 100px;"
+                                   OnClick="@(() => Navigation.NavigateTo($"/users/edit/{context.Id}"))">
+                            Editar
+                        </MudButton>
+                        
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Error"
+                                   Style="width: 100px;"
+                                   OnClick="@(() => ConfirmDelete(context.Id))">
+                            Eliminar
+                        </MudButton>
+                
+                    </div>
+                </MudTd>
+                
+                <MudTd Style="text-align: center;">
+                    <MudChip T="string" 
+                             Color="@(context.Role == "Admin" ? Color.Primary : Color.Secondary)" 
+                             Variant="Variant.Filled"
+                             Style="width: 80px; justify-content: center;">
+                        @context.Role
+                    </MudChip>
+                </MudTd>
+
+                
+            </RowTemplate>
+
+        </MudTable>
+    }
+
+</MudPaper>
+
+@inject AuthenticationStateProvider AuthStateProvider
+
+@code {
+    List<UserResponse>? _users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+
+        if (!user.IsInRole("Admin"))
+        {
+            Navigation.NavigateTo("/users/me");
+            return;
+        }
+        
+        _users = await UserService.GetUsers();
+        
+    }
+    
+    private async Task ConfirmDelete(int id)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Message", "Esta acción eliminará el usuario permanentemente." }
+        };
+        
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>(
+            "Confirmación",
+            parameters
+        );
+
+
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false, Data: true })
+        {
+            await Delete(id);
+        }
+    }
+    
+    private async Task Delete(int id)
+    {
+        try
+        {
+            await UserService.DeleteUser(id);
+
+            Snackbar.Add("Usuario eliminado ✅", Severity.Success);
+
+            _users = await UserService.GetUsers();
+        }
+        catch
+        {
+            Snackbar.Add("Error eliminando ❌", Severity.Error);
+        }
+    }
+
+}

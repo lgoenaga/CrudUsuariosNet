@@ -1,0 +1,135 @@
+﻿@inherits LayoutComponentBase
+
+<MudLayout Style="min-height:100vh; display:flex; flex-direction:column;">
+    
+<!-- 🔥 NAVBAR -->
+    <MudAppBar Color="Color.Primary" Elevation="4">
+
+        <!-- ☰ BOTÓN HAMBURGUESA -->
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@ToggleDrawer" />
+
+        <MudText Typo="Typo.h6">Crud Usuarios</MudText>
+
+        <MudSpacer />
+
+        <!-- 👉 NAVBAR DESKTOP -->
+        <MudHidden Breakpoint="Breakpoint.SmAndDown">
+
+            <AuthorizeView Context="auth">
+                <Authorized>
+                    
+                    
+                @if (auth.User.IsInRole("Admin"))
+                {
+                    <NavLink href="/users" Match="NavLinkMatch.All"
+                             class="nav-link"
+                             ActiveClass="active-link">
+                        <MudButton Variant="Variant.Text" Color="Color.Inherit">Usuarios</MudButton>
+                    </NavLink>
+                }
+                
+                <NavLink href="/users/me"
+                             class="nav-link"
+                             ActiveClass="active-link">
+                        <MudButton Variant="Variant.Text" Color="Color.Inherit">Mi Perfil</MudButton>
+                    </NavLink>
+
+                    <MudButton Color="Color.Inherit" OnClick="@Logout">
+                        Logout
+                    </MudButton>
+                    <MudText Class="mr-4">
+                        @auth.User.Identity?.Name
+                    </MudText>
+
+                </Authorized>
+
+                <NotAuthorized>
+                    <NavLink href="/login">
+                        <MudButton>Login</MudButton>
+                    </NavLink>
+                </NotAuthorized>
+
+            </AuthorizeView>
+
+        </MudHidden>
+
+    </MudAppBar>
+
+    <!-- 🔥 DRAWER MOBILE -->
+    <MudDrawer @bind-Open="_drawerOpen"
+               Elevation="1"
+               Variant="DrawerVariant.Temporary"
+               Anchor="Anchor.Left">
+
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">Menú</MudText>
+        </MudDrawerHeader>
+
+        <MudNavMenu>
+
+            <AuthorizeView Context="auth">
+                <Authorized>
+
+                    <MudText Class="pa-3">
+                        @auth.User.Identity?.Name
+                    </MudText>
+                @if (auth.User.IsInRole("Admin"))
+                    {
+                        <MudNavLink Href="/users">Usuarios</MudNavLink>
+                    }
+                    <MudNavLink Href="/users/me">Mi Perfil</MudNavLink>
+
+                    <MudNavLink OnClick="@Logout">Logout</MudNavLink>
+
+                </Authorized>
+
+                <NotAuthorized>
+                    <MudNavLink Href="/login">Login</MudNavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+
+        </MudNavMenu>
+
+    </MudDrawer>
+
+    <!-- ✅ CONTENIDO -->
+    <MudMainContent Class="p-4" Style="flex:1;">
+        @Body
+    </MudMainContent>
+
+    <!-- ✅ FOOTER -->
+
+    <MudPaper Elevation="2" Class="pa-4"
+              Style="background-color:#e3f2fd; text-align:center;">
+        <MudText Typo="Typo.caption">
+            © 2026 - Luis Goenaga App
+        </MudText>
+    </MudPaper>
+
+
+</MudLayout>
+
+
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+
+@code {
+    
+    bool _drawerOpen;
+
+    void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task Logout()
+    {
+        await Js.InvokeVoidAsync("localStorageHelper.remove", "token");
+
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+}

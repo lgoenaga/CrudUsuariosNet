@@ -1,0 +1,61 @@
+@page "/users/create"
+
+@attribute [Authorize]
+
+@using BlazorCrudUsuarios.Application.Interfaces
+@using Microsoft.AspNetCore.Authorization
+
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<MudPaper Class="pa-6 mx-auto mt-6" Style="max-width:500px;">
+
+    <MudText Typo="Typo.h5" Class="mb-4">
+        Crear Usuario
+    </MudText>
+
+    <MudTextField @bind-Value="_email" Label="Email" FullWidth="true" />
+    <MudTextField @bind-Value="_password" Label="Password" 
+                  InputType="InputType.Password" FullWidth="true" />
+
+    <MudButton Class="mt-4"
+               Variant="Variant.Filled"
+               Color="Color.Primary"
+               FullWidth="true"
+               OnClick="@HandleCreate">
+        Crear Usuario
+    </MudButton>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <MudText Color="Color.Error">@_error</MudText>
+    }
+
+</MudPaper>
+
+@code {
+    string _email = "";
+    string _password = "";
+    string _error = "";
+
+    private async Task HandleCreate()
+    {
+        try
+        {
+            _error = "";
+
+            await UserService.CreateUser(new Application.Models.CreateUserRequest
+            {
+                Email = _email,
+                Password = _password
+            });
+
+            // 🔥 volver a lista
+            Navigation.NavigateTo("/users");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+}

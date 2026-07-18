@@ -1,0 +1,42 @@
+<MudDialog Style="background-color:#eef6ff; border-radius:12px;">
+
+    <DialogContent>
+        <MudStack Spacing="2" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.WarningAmber"
+                     Color="Color.Warning"
+                     Size="Size.Large" />
+
+            <MudText Typo="Typo.h6">Eliminar usuario</MudText>
+
+            <MudText Typo="Typo.body2" Align="Align.Center">
+                Esta acción no se puede deshacer.
+            </MudText>
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Color="Color.Default"
+                   Variant="Variant.Filled"
+                   OnClick="@Cancel">
+            Cancelar
+        </MudButton>
+
+        <MudButton Color="Color.Error"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Delete"
+                   OnClick="@Confirm">
+            Eliminar
+        </MudButton>
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public string Message { get; set; } = "¿Confirmar acción?";
+
+    void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+
+    void Cancel() => MudDialog.Cancel();
+}
